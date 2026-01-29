@@ -15,39 +15,13 @@ export const NotificationService = {
   },
 
   // Send a system notification
-  send: async (title: string, body: string, icon?: string) => {
-    // 1. SMART CHECK: If the user is actively looking at the app, don't show a system notification.
-    if (document.visibilityState === 'visible') {
-        console.log("App is focused. Suppressing system notification:", title);
-        return;
-    }
-
+  send: (title: string, body: string, icon?: string) => {
     if (Notification.permission === 'granted') {
-      // Changed to 'any' because 'vibrate' is sometimes missing from standard NotificationOptions type definition
-      const options: any = {
+      new Notification(title, {
         body,
         icon: icon || 'https://cdn-icons-png.flaticon.com/512/1165/1165674.png',
-        vibrate: [200, 100, 200],
-        badge: 'https://cdn-icons-png.flaticon.com/512/1165/1165674.png',
-        tag: 'tm-booker-notification', // Tag prevents stacking identical notifications
-        requireInteraction: true // Keeps notification on screen until user clicks
-      };
-
-      // 2. Use Service Worker if available (Better for PWA/Background)
-      if ('serviceWorker' in navigator) {
-          try {
-            const reg = await navigator.serviceWorker.ready;
-            if (reg) {
-                await reg.showNotification(title, options);
-                return;
-            }
-          } catch (e) {
-            console.error("SW Notification failed, falling back", e);
-          }
-      }
-
-      // 3. Fallback for standard web pages if SW fails
-      new Notification(title, options);
+        vibrate: [200, 100, 200]
+      } as any);
     }
   },
 

@@ -16,13 +16,6 @@ export const Profile: React.FC<ProfileProps> = ({ user, onUpdate, onLogout }) =>
   const [loading, setLoading] = useState(false);
   const [notificationStatus, setNotificationStatus] = useState<string>('default');
   const [allUsers, setAllUsers] = useState<User[]>([]); // For Admin Directory
-  
-  // Admin Notification State
-  const [notifTitle, setNotifTitle] = useState('');
-  const [notifBody, setNotifBody] = useState('');
-  const [notifTarget, setNotifTarget] = useState<string>('all');
-  const [sendingNotif, setSendingNotif] = useState(false);
-
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -65,25 +58,6 @@ export const Profile: React.FC<ProfileProps> = ({ user, onUpdate, onLogout }) =>
     } else {
       setMessage('Failed to update password. Try again.');
     }
-  };
-
-  const handleSendNotification = async (e: React.FormEvent) => {
-      e.preventDefault();
-      setSendingNotif(true);
-      
-      const targetId = notifTarget === 'all' ? null : notifTarget;
-      
-      const success = await dataService.sendAdminNotification(notifTitle, notifBody, targetId, user.id);
-      
-      if (success) {
-          alert("Notification Sent! Users currently online will see it immediately.");
-          setNotifTitle('');
-          setNotifBody('');
-          setNotifTarget('all');
-      } else {
-          alert("Failed to send notification.");
-      }
-      setSendingNotif(false);
   };
 
   // Logic to resize image and convert to Base64
@@ -199,63 +173,6 @@ export const Profile: React.FC<ProfileProps> = ({ user, onUpdate, onLogout }) =>
                 )}
              </div>
           </div>
-        )}
-        
-        {/* Admin Notification Console */}
-        {user.isAdmin && (
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-purple-100 ring-1 ring-purple-100">
-                <h4 className="text-sm font-semibold text-purple-900 mb-4 uppercase tracking-wider flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
-                    </svg>
-                    Send Announcement
-                </h4>
-                <form onSubmit={handleSendNotification} className="space-y-3">
-                    <div>
-                        <label className="block text-xs font-semibold text-gray-600 mb-1">Target</label>
-                        <select 
-                            value={notifTarget} 
-                            onChange={(e) => setNotifTarget(e.target.value)}
-                            className="w-full text-sm border-gray-300 rounded-lg shadow-sm focus:border-purple-500 focus:ring-purple-500"
-                        >
-                            <option value="all">Everyone</option>
-                            {allUsers.filter(u => u.id !== user.id).map(u => (
-                                <option key={u.id} value={u.id}>{u.name}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <input 
-                            type="text" 
-                            placeholder="Title (e.g. Meeting Cancelled!)"
-                            value={notifTitle}
-                            onChange={(e) => setNotifTitle(e.target.value)}
-                            required
-                            className="w-full text-sm border-gray-300 rounded-lg shadow-sm focus:border-purple-500 focus:ring-purple-500"
-                        />
-                    </div>
-                    <div>
-                        <textarea 
-                            placeholder="Message body..."
-                            value={notifBody}
-                            onChange={(e) => setNotifBody(e.target.value)}
-                            required
-                            rows={2}
-                            className="w-full text-sm border-gray-300 rounded-lg shadow-sm focus:border-purple-500 focus:ring-purple-500"
-                        ></textarea>
-                    </div>
-                    <button 
-                        type="submit"
-                        disabled={sendingNotif}
-                        className="w-full bg-purple-600 text-white py-2 rounded-lg text-sm font-bold hover:bg-purple-700 transition disabled:opacity-50"
-                    >
-                        {sendingNotif ? 'Sending...' : 'Send Broadcast'}
-                    </button>
-                    <p className="text-[10px] text-gray-400 text-center">
-                        Note: Users only see this if they have the app open.
-                    </p>
-                </form>
-            </div>
         )}
 
         {/* Avatar Settings - Only for Registered Users */}

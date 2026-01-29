@@ -73,12 +73,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ currentUser }) => {
   };
 
   const openRsvpModal = (meetingId: string) => {
-    // RLS Restriction: Guests cannot write to DB
-    if (currentUser.isGuest) {
-        alert("Please sign in to RSVP. Guests cannot RSVP directly.");
-        return;
-    }
     setRsvpMeetingId(meetingId);
+    // Pre-fill name for registered users, empty for guests
     setGuestName(currentUser.isGuest ? '' : currentUser.name);
     setShowRsvpModal(true);
   };
@@ -86,11 +82,17 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ currentUser }) => {
   const handleSubmitRsvp = async (status: RSVPStatus) => {
     if (!rsvpMeetingId) return;
     
+    // Validate guest name
+    if (currentUser.isGuest && !guestName.trim()) {
+        alert("Please enter your name to RSVP.");
+        return;
+    }
+    
     const rsvpPayload: RSVP = {
       userId: currentUser.id,
-      name: currentUser.name,
+      name: currentUser.isGuest ? guestName : currentUser.name,
       status: status,
-      isGuest: false // Guests blocked at entry
+      isGuest: currentUser.isGuest || false
     };
 
     await dataService.rsvpToMeeting(rsvpMeetingId, rsvpPayload);
@@ -114,6 +116,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ currentUser }) => {
 
       <div className="p-4 space-y-4">
         {meetings.map((meeting) => {
+          // Check if user has RSVP'd (matches ID for registered, meaningless for guests usually unless we track session)
+          // For guests, we generally won't show "You are going" unless we track them by local storage, 
+          // but for now this stays as is for registered users.
           const myRsvp = meeting.rsvps.find(r => r.userId === currentUser.id);
           const yesCount = meeting.rsvps.filter(r => r.status === 'yes').length;
           const maybeCount = meeting.rsvps.filter(r => r.status === 'maybe').length;
@@ -232,6 +237,21 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ currentUser }) => {
            <div className="bg-white rounded-lg shadow-2xl w-full max-w-sm p-6">
              <h3 className="text-lg font-bold mb-4 text-gray-900">Confirm Attendance</h3>
              
+             {/* Name Input for Guests */}
+             {currentUser.isGuest && (
+               <div className="mb-4">
+                 <label className="block text-sm font-semibold text-gray-700 mb-1">Your Name</label>
+                 <input 
+                   type="text" 
+                   value={guestName}
+                   onChange={(e) => setGuestName(e.target.value)}
+                   placeholder="Enter your name..."
+                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-900 focus:border-blue-900 outline-none"
+                   autoFocus
+                 />
+               </div>
+             )}
+
              <div className="flex flex-col gap-3">
                <button 
                  onClick={() => handleSubmitRsvp('yes')}

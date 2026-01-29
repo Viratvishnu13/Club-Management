@@ -522,7 +522,8 @@ class Store {
   async rsvpToMeeting(meetingId: string, rsvp: RSVP): Promise<void> {
     const payload = {
       meeting_id: meetingId,
-      user_id: rsvp.userId,
+      // CHANGE: Send null for guests to avoid UUID format errors in the DB
+      user_id: rsvp.isGuest ? null : rsvp.userId,
       name: rsvp.name,
       status: rsvp.status,
       is_guest: rsvp.isGuest
@@ -536,24 +537,6 @@ class Store {
     if (error) {
       console.error("Error saving RSVP:", error);
     }
-  }
-
-  // --- ADMIN NOTIFICATION SYSTEM ---
-  async sendAdminNotification(title: string, body: string, targetUserId: string | null, senderId: string): Promise<boolean> {
-      const payload = {
-          title,
-          body,
-          target_user_id: targetUserId, // NULL = All users
-          triggered_by: senderId
-      };
-      
-      const { error } = await supabase.from('notifications').insert(payload);
-      
-      if (error) {
-          console.error("Failed to send notification:", error);
-          return false;
-      }
-      return true;
   }
 
   // SIGN UP via Supabase Auth

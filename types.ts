@@ -46,14 +46,6 @@ export interface Meeting {
   rsvps: RSVP[];
 }
 
-export interface NotificationLog {
-  id: string;
-  title: string;
-  body: string;
-  target_user_id: string | null; // null means 'everyone'
-  created_at: string;
-}
-
 export const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 export const DEFAULT_GUEST_AVATAR = "https://cdn-icons-png.flaticon.com/512/1077/1077114.png";
 
