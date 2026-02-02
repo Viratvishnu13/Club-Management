@@ -42,7 +42,8 @@ const LEVEL_3_ELECTIVES = [
   "Prepare for an Interview",
   "Understanding Vocal Variety",
   "Using Descriptive Language",
-  "Using Presentation Software"
+  "Using Presentation Software",
+  "Successful Club Series Presentation"
 ];
 
 const LEVEL_4_ELECTIVES = [
@@ -53,7 +54,9 @@ const LEVEL_4_ELECTIVES = [
   "Managing a Difficult Audience",
   "Public Relations Strategies",
   "Question-and-Answer Session",
-  "Write a Compelling Blog"
+  "Write a Compelling Blog",
+  "Successful Club Series Presentation",
+  "Better Speaker Presentation Series"
 ];
 
 const LEVEL_5_ELECTIVES = [
@@ -62,7 +65,9 @@ const LEVEL_5_ELECTIVES = [
   "Leading in Your Volunteer Organization",
   "Lessons Learned",
   "Moderate a Panel Discussion",
-  "Prepare to Speak Professionally"
+  "Prepare to Speak Professionally",
+  "Successful Club Series Presentation",
+  "Leadership Excellence Series Presentation"
 ];
 
 // Required projects per Path and Level (excluding L1 which is global, and Electives)
