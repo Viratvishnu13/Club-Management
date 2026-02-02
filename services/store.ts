@@ -116,7 +116,7 @@ const PATH_SPECIFIC_REQS: Record<string, Record<string, string[]>> = {
     "Level 5": ["Prepare to Speak Professionally"]
   },
   "Strategic Relationships": {
-    "Level 2": ["Understanding Your Leadership Style", "Cross-Cultural Understanding"],
+    "Level 2": ["Understanding Your Leadership Style", "Active Listening"],
     "Level 3": ["Make Connections Through Networking"],
     "Level 4": ["Public Relations Strategies"],
     "Level 5": ["Leading in Your Volunteer Organization"]

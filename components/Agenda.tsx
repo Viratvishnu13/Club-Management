@@ -151,7 +151,7 @@ export const Agenda: React.FC<AgendaProps> = ({ currentUser }) => {
   const handleBook = async (slot: Slot) => {
     if (!currentMeeting || currentUser.isGuest) return;
 
-    if (slot.roleName.toLowerCase().includes('speaker')) {
+    if (slot.roleName.toLowerCase().includes('speaker') && !slot.roleName.toLowerCase().includes('Better')) {
       setBookingSlot(slot);
       setSpeakerForm({ pathway: '', level: 'Level 1', project: '', title: '' });
       setShowSpeakerModal(true);
