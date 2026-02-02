@@ -20,6 +20,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ currentUser }) => {
   const [showRsvpModal, setShowRsvpModal] = useState(false);
   const [rsvpMeetingId, setRsvpMeetingId] = useState<string | null>(null);
   const [guestName, setGuestName] = useState('');
+  const [isSuccess, setIsSuccess] = useState(false);
   
   // Edit State
   const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null);
@@ -74,7 +75,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ currentUser }) => {
 
   const openRsvpModal = (meetingId: string) => {
     setRsvpMeetingId(meetingId);
-    // Pre-fill name for registered users, empty for guests
     setGuestName(currentUser.isGuest ? '' : currentUser.name);
     setShowRsvpModal(true);
   };
@@ -82,7 +82,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ currentUser }) => {
   const handleSubmitRsvp = async (status: RSVPStatus) => {
     if (!rsvpMeetingId) return;
     
-    // Validate guest name
     if (currentUser.isGuest && !guestName.trim()) {
         alert("Please enter your name to RSVP.");
         return;
@@ -97,10 +96,17 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ currentUser }) => {
 
     await dataService.rsvpToMeeting(rsvpMeetingId, rsvpPayload);
     
-    setShowRsvpModal(false);
-    setRsvpMeetingId(null);
-    setGuestName('');
-    setIsRefresh(prev => prev + 1);
+    // Trigger Success Animation
+    setIsSuccess(true);
+    
+    // Close modal after delay to show the animation
+    setTimeout(() => {
+        setShowRsvpModal(false);
+        setIsSuccess(false);
+        setRsvpMeetingId(null);
+        setGuestName('');
+        setIsRefresh(prev => prev + 1);
+    }, 1500);
   };
 
   if (loading) {
@@ -116,10 +122,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ currentUser }) => {
 
       <div className="p-4 space-y-4">
         {meetings.map((meeting) => {
-          // Check if user has RSVP'd (matches ID for registered, meaningless for guests usually unless we track session)
-          // For guests, we generally won't show "You are going" unless we track them by local storage, 
-          // but for now this stays as is for registered users.
-          const myRsvp = meeting.rsvps.find(r => r.userId === currentUser.id);
+          // Check if registered user has RSVP'd
+          // Guests are matched by name in the RSVP list for visual feedback
+          const myRsvp = meeting.rsvps.find(r => 
+            currentUser.isGuest ? r.name === guestName : r.userId === currentUser.id
+          );
+          
           const yesCount = meeting.rsvps.filter(r => r.status === 'yes').length;
           const maybeCount = meeting.rsvps.filter(r => r.status === 'maybe').length;
 
@@ -167,7 +175,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ currentUser }) => {
                 
                 <div className="mt-4 flex items-center justify-between">
                   <div className="text-sm text-gray-600 font-medium">
-                     <span className="font-bold text-gray-900">{yesCount}</span> Members Going
+                     <span className="font-bold text-gray-900">{yesCount}</span> Attendees
                   </div>
                   
                   <button 
@@ -191,7 +199,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ currentUser }) => {
                   </button>
                 </div>
 
-                {/* Admin View of RSVPs */}
                 {currentUser.isAdmin && meeting.rsvps.length > 0 && (
                   <div className="mt-4 pt-4 border-t border-gray-100">
                     <details className="text-xs">
@@ -234,44 +241,57 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ currentUser }) => {
       {/* RSVP Modal */}
       {showRsvpModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 p-4 backdrop-blur-sm">
-           <div className="bg-white rounded-lg shadow-2xl w-full max-w-sm p-6">
-             <h3 className="text-lg font-bold mb-4 text-gray-900">Confirm Attendance</h3>
-             
-             {/* Name Input for Guests */}
-             {currentUser.isGuest && (
-               <div className="mb-4">
-                 <label className="block text-sm font-semibold text-gray-700 mb-1">Your Name</label>
-                 <input 
-                   type="text" 
-                   value={guestName}
-                   onChange={(e) => setGuestName(e.target.value)}
-                   placeholder="Enter your name..."
-                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-900 focus:border-blue-900 outline-none"
-                   autoFocus
-                 />
-               </div>
-             )}
+           <div className="bg-white rounded-lg shadow-2xl w-full max-w-sm p-6 text-center">
+             {isSuccess ? (
+                <div className="py-8 animate-in fade-in zoom-in duration-300">
+                    <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-green-100 mb-4 animate-bounce">
+                        <svg className="h-12 w-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <h3 className="text-2xl font-black text-gray-900">Booked!</h3>
+                    <p className="text-gray-500 font-medium mt-2">We've saved your spot.</p>
+                </div>
+             ) : (
+                <>
+                    <h3 className="text-lg font-bold mb-4 text-gray-900">Confirm Attendance</h3>
+                    
+                    {currentUser.isGuest && (
+                    <div className="mb-4 text-left">
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Your Name</label>
+                        <input 
+                        type="text" 
+                        value={guestName}
+                        onChange={(e) => setGuestName(e.target.value)}
+                        placeholder="Enter your name..."
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-900 focus:border-blue-900 outline-none"
+                        autoFocus
+                        />
+                    </div>
+                    )}
 
-             <div className="flex flex-col gap-3">
-               <button 
-                 onClick={() => handleSubmitRsvp('yes')}
-                 className="w-full bg-blue-900 text-white py-3 rounded-xl font-bold hover:bg-blue-800 transition-colors shadow-sm flex items-center justify-center gap-2"
-               >
-                 <span>Yes, I'm Going!</span>
-               </button>
-               <button 
-                 onClick={() => handleSubmitRsvp('maybe')}
-                 className="w-full bg-white text-gray-600 border border-gray-300 py-3 rounded-xl font-bold hover:bg-gray-50 transition-colors"
-               >
-                 Maybe Next Time
-               </button>
-               <button 
-                 onClick={() => { setShowRsvpModal(false); setRsvpMeetingId(null); }}
-                 className="w-full text-gray-400 text-xs hover:text-gray-600 mt-2"
-               >
-                 Cancel
-               </button>
-             </div>
+                    <div className="flex flex-col gap-3">
+                    <button 
+                        onClick={() => handleSubmitRsvp('yes')}
+                        className="w-full bg-blue-900 text-white py-3 rounded-xl font-bold hover:bg-blue-800 transition-colors shadow-sm flex items-center justify-center gap-2"
+                    >
+                        <span>Yes, I'm Going!</span>
+                    </button>
+                    <button 
+                        onClick={() => handleSubmitRsvp('maybe')}
+                        className="w-full bg-white text-gray-600 border border-gray-300 py-3 rounded-xl font-bold hover:bg-gray-50 transition-colors"
+                    >
+                        Maybe Next Time
+                    </button>
+                    <button 
+                        onClick={() => { setShowRsvpModal(false); setRsvpMeetingId(null); }}
+                        className="w-full text-gray-400 text-xs hover:text-gray-600 mt-2"
+                    >
+                        Cancel
+                    </button>
+                    </div>
+                </>
+             )}
            </div>
         </div>
       )}
@@ -282,7 +302,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ currentUser }) => {
            <div className="bg-white rounded-lg shadow-2xl w-full max-w-sm p-6 max-h-[90vh] overflow-y-auto">
              <h3 className="text-xl font-bold mb-4 text-gray-900">Edit Meeting</h3>
              <form onSubmit={handleSaveEdit} className="space-y-4">
-                {/* Same form fields as before */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Name</label>
                   <input 

@@ -525,23 +525,42 @@ class Store {
 
   // RLS-Friendly RSVP: Upsert to 'rsvps' table
   async rsvpToMeeting(meetingId: string, rsvp: RSVP): Promise<void> {
-    const payload = {
+    // 1. Prepare the base payload
+    const payload: any = {
       meeting_id: meetingId,
-      // CHANGE: Send null for guests to avoid UUID format errors in the DB
       user_id: rsvp.isGuest ? null : rsvp.userId,
       name: rsvp.name,
       status: rsvp.status,
       is_guest: rsvp.isGuest
     };
 
-    // Upsert matches on (meeting_id, user_id) PK
+    // 2. Handle Guest Duplicates: 
+    // If it's a guest, we check if an RSVP with this name already exists for this meeting
+    if (rsvp.isGuest) {
+      const { data: existingGuest } = await supabase
+        .from('rsvps')
+        .select('id')
+        .eq('meeting_id', meetingId)
+        .eq('name', rsvp.name)
+        .is('user_id', null)
+        .maybeSingle();
+
+      if (existingGuest) {
+        // Update existing record instead of inserting a new one
+        await supabase
+          .from('rsvps')
+          .update(payload)
+          .eq('id', existingGuest.id);
+        return;
+      }
+    }
+
+    // 3. Registered User Upsert (uses the meeting_id/user_id unique constraint)
     const { error } = await supabase
       .from('rsvps')
       .upsert(payload);
 
-    if (error) {
-      console.error("Error saving RSVP:", error);
-    }
+    if (error) console.error("Error saving RSVP:", error);
   }
 
   // SIGN UP via Supabase Auth
